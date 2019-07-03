@@ -18,15 +18,16 @@
     },
     "software": {
       "display": {
-        "title": "elastic search basic license",
+        "title": "Elastic Search",
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2019-07-04T08:32:23+10:00"
+    "timestamp": "2019-07-04T09:13:54+10:00"
   },
   "software": {
     "base": {
       "name": "elasticsearch",
+      "inherit": "https://raw.githubusercontent.com/EnginesBlueprints/elasticsearch-base/master/blueprint.json",
       "framework": "openjdk8",
       "deployment_type": "web",
       "http_protocol": "https_and_http",
@@ -35,74 +36,13 @@
         "recommended": 3072
       }
     },
-    "ports": [
-      {
-        "port": "9200",
-        "external": "9200",
-        "protocol": "tcp"
-      },
-      {
-        "port": "9300",
-        "external": "9300",
-        "protocol": "tcp"
-      }
-    ],
     "scripts": {
       "start": {
         "language": "sh",
         "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\n\r\n/home/engines/scripts/actionators/build_group_mapping.sh\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\nstartup_complete\r\nwait\r\nshutdown_complete\r\n"
       }
     },
-    "installed_packages": [
-      {
-        "name": "elasticsearch-7.2.0.tar.gz",
-        "download_type": "http(s)",
-        "source_url": "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.2.0-linux-x86_64.tar.gz",
-        "destination": "elasticsearch",
-        "extraction_command": "tar -xzpf ",
-        "path_to_extracted": "elasticsearch-7.2.0"
-      }
-    ],
     "service_configurations": [
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "filesystem/local/filesystem",
-        "variables": {
-          "service_name": "config",
-          "volume_src": "",
-          "engine_path": "",
-          "permissions": "rw",
-          "user": "_Engines_Builder(data_uid)",
-          "group": "_Engines_Builder(data_gid)",
-          "fw_user": "_Engines_Builder(cont_user_id)"
-        }
-      },
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "filesystem/local/filesystem",
-        "variables": {
-          "service_name": "logs",
-          "volume_src": "",
-          "engine_path": "",
-          "permissions": "rw",
-          "user": "_Engines_Builder(data_uid)",
-          "group": "_Engines_Builder(data_gid)",
-          "fw_user": "_Engines_Builder(cont_user_id)"
-        }
-      },
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "filesystem/local/filesystem",
-        "variables": {
-          "service_name": "data",
-          "volume_src": "",
-          "engine_path": "",
-          "permissions": "rw",
-          "user": "_Engines_Builder(data_uid)",
-          "group": "_Engines_Builder(data_gid)",
-          "fw_user": "_Engines_Builder(cont_user_id)"
-        }
-      },
       {
         "publisher_namespace": "EnginesSystem",
         "type_path": "ldap_group",
@@ -137,40 +77,11 @@
         }
       }
     ],
-    "environment_variables": [
-      {
-        "name": "ES_HOME",
-        "value": "/home/app/elasticsearch",
-        "mandatory": true,
-        "immutable": true,
-        "input": {
-          "type": "boolean"
-        }
-      },
-      {
-        "name": "ES_PATH_CONF",
-        "value": "/home/app/elasticsearch/config/",
-        "mandatory": true,
-        "immutable": true,
-        "input": {
-          "type": "boolean"
-        }
-      },
-      {
-        "name": "node_name",
-        "value": "_Engines_Builder(engine_name).engines.internal",
-        "mandatory": true,
-        "immutable": true,
-        "input": {
-          "type": "string"
-        }
-      }
-    ],
     "template_files": [
       {
         "path": "/home/app/elasticsearch/config/elasticsearch.yml",
-        "language": "text",
-        "content": "path:\r\n    data: /home/fs/data/\r\n    logs: /home/fs/logs/\r\n\r\n\r\nnetwork:\r\n  host: _site_\r\ndiscovery:\r\n  type: single-node\r\n  \r\n#cluster:\r\n# initial_master_nodes:\r\n#  - _Engines_Builder(engine_name).engines.internal\r\n\r\nxpack:\r\n  security:\r\n    enabled: true\r\n    authc:\r\n      realms:\r\n        ldap:\r\n          ldap1:\r\n            order: 0\r\n            url: \"ldap://ldap\"\r\n            user_dn_templates:\r\n              - \"uid={0}, ou=People, dc=engines, dc=internal\"\r\n              - \"cn={0}, ou=People, dc=engines, dc=internal\"\r\n              - \"uid={0}, ou=hosts,ou=engines, dc=engines, dc=internal\"\r\n            group_search:\r\n              base_dn: \"ou=Groups,dc=engines,dc=internal\"\r\n            files:\r\n              role_mapping: \"/home/app/elasticsearch/config/group_to_role_mapping.yml\"\r\n            unmapped_groups_as_roles: false"
+        "language": "yaml",
+        "content": "path:\r\n    data: /home/fs/data/\r\n    logs: /home/fs/logs/\r\n\r\n\r\nnetwork:\r\n  host: _site_\r\ndiscovery:\r\n  type: single-node\r\n\r\nxpack:\r\n  security:\r\n    enabled: true\r\n    authc:\r\n      realms:\r\n        ldap:\r\n          ldap1:\r\n            order: 0\r\n            url: \"ldap://ldap\"\r\n            user_dn_templates:\r\n              - \"uid={0}, ou=People, dc=engines, dc=internal\"\r\n              - \"cn={0}, ou=People, dc=engines, dc=internal\"\r\n              - \"uid={0}, ou=hosts,ou=engines, dc=engines, dc=internal\"\r\n            group_search:\r\n              base_dn: \"ou=Groups,dc=engines,dc=internal\"\r\n            files:\r\n              role_mapping: \"/home/app/elasticsearch/config/group_to_role_mapping.yml\"\r\n            unmapped_groups_as_roles: false"
       },
       {
         "path": "/home/app/elasticsearch/config/group_to_role_mapping.yml",
