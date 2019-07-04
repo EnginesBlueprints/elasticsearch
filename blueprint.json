@@ -22,7 +22,7 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2019-07-04T17:40:30+10:00"
+    "timestamp": "2019-07-04T17:59:36+10:00"
   },
   "software": {
     "base": {
@@ -42,14 +42,14 @@
         "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\nwait_for_signal()\r\n{\r\n    while ! test -f /home/engines/run/flags/sig_term -o -f /home/engines/run/flags/sig_quit \r\n     do\r\n      sleep 3600 &\r\n      wait\r\n     done\r\n}\r\n\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\nstartup_complete\r\nwait_for_signal\r\nshutdown_complete\r\n"
       },
       "first_run": {
-        "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords -s auto |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
+        "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
       }
     },
     "template_files": [
       {
         "path": "/home/app/elasticsearch/config/elasticsearch.yml",
         "language": "yaml",
-        "content": "path:\r\n    data: /home/fs/data/\r\n    logs: /home/fs/logs/\r\n    repo: /home/backup/\r\n\r\nnetwork:\r\n  host: _site_\r\ndiscovery:\r\n  type: single-node\r\n\r\n\r\nxpack:\r\n  security:\r\n    enabled: true\r\n    authc:\r\n      realms:        \r\n        native:\r\n          native1:\r\n            order: 0"
+        "content": "path:\r\n    data: /home/fs/data/\r\n    logs: /home/fs/logs/\r\n    repo: /home/fs/backup/\r\n\r\nnetwork:\r\n  host: _site_\r\ndiscovery:\r\n  type: single-node\r\n\r\n\r\nxpack:\r\n  security:\r\n    enabled: true\r\n    authc:\r\n      realms:        \r\n        native:\r\n          native1:\r\n            order: 0"
       }
     ],
     "file_write_permissions": [
