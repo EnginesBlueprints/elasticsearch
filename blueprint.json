@@ -23,7 +23,7 @@
         "description": "With LDAP Integration\r\nRequires a license from Elastic Search\r\nCan activate trail and apply licence via actionators on the application from the engines system gui."
       }
     },
-    "timestamp": "2019-07-04T10:45:49+10:00"
+    "timestamp": "2019-07-04T11:04:02+10:00"
   },
   "software": {
     "base": {
@@ -232,7 +232,7 @@
         ],
         "script": {
           "language": "sh",
-          "content": "#!/bin/sh\r\n\r\necho $license_file > /home/app/license/license.json\r\n\r\nmkdir -p /home/app/state/\r\n\r\ncurl -X POST \"_Engines_Builder(engine_name):9200/_license/ @/home/app/license/license.json\"\r\n\r\ntouch /home/app/state/licensed\r\n"
+          "content": "#!/bin/sh\r\n\r\necho $license_file > /home/app/license/license.json\r\n\r\nmkdir -p /home/app/state/\r\n\r\n\r\ncurl -XPUT  'http://_Engines_Builder(engine_name):9200/_license' -H \"Content-Type: application/json\" -d @/home/app/license/license.json\r\n\r\ntouch /home/app/state/licensed\r\n"
         }
       }
     ]
