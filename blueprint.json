@@ -22,7 +22,7 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2019-07-04T17:59:36+10:00"
+    "timestamp": "2019-07-04T19:12:33+10:00"
   },
   "software": {
     "base": {
@@ -39,7 +39,7 @@
     "scripts": {
       "start": {
         "language": "sh",
-        "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\nwait_for_signal()\r\n{\r\n    while ! test -f /home/engines/run/flags/sig_term -o -f /home/engines/run/flags/sig_quit \r\n     do\r\n      sleep 3600 &\r\n      wait\r\n     done\r\n}\r\n\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\nstartup_complete\r\nwait_for_signal\r\nshutdown_complete\r\n"
+        "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\nwait_for_signal()\r\n{\r\n    while ! test -f /home/engines/run/flags/sig_term -o -f /home/engines/run/flags/sig_quit \r\n     do\r\n      sleep 3600 &\r\n      wait\r\n     done\r\n}\r\n\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\n\r\nif ! test -f /home/app/state/creds/inited\r\n then\r\n   password=_Engines_System(random(18)) #move this to a template file and then delete\r\n   echo backup:$password > /home/app/state/creds/backup\r\n   /home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >> /home/app/state/creds/initial\r\n   curl -X POST \"localhost:9200/_security/user/snapshot\" -H 'Content-Type: application/json' -d'\r\n{\r\n  \"password\" : \"'$password'\",\r\n  \"roles\" : [ \"snapshot\" ],\r\n  \"full_name\" : \"backup\",\r\n  \"email\" : \"Backup@engines.internal\",\r\n  \"metadata\" : {\r\n    \"Usage\" : \"Backup\"\r\n  }\r\n}\r\n'\r\n\r\n   touch /home/app/state/creds/inited\r\nfi   \r\nstartup_complete\r\nwait_for_signal\r\nshutdown_complete\r\n"
       },
       "first_run": {
         "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
@@ -82,6 +82,13 @@
         "return_type": "plain_text",
         "script": {
           "content": "#!/bin/sh\r\ncat /home/app/state/creds/initial"
+        }
+      },
+      {
+        "name": "run_backup",
+        "return_type": "none",
+        "script": {
+          "content": "#!/bin/sh\r\n\r\ncreds=`cat /home/app/state/creds/backup`\r\n\r\ncurl -u $creds -X PUT \"_Engines_Builder(engine_name):9200/_snapshot/my_backup\" -H 'Content-Type: application/json' -d'\r\n{\r\n  \"type\": \"fs\",\r\n  \"settings\": {\r\n    \"location\": \"/home/fs/backup\"\r\n  }\r\n}\r\n' >/dev/null\r\n"
         }
       }
     ]
