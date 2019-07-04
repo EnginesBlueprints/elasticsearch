@@ -18,12 +18,11 @@
     },
     "software": {
       "display": {
-        "title": "Elastic Search Professional ",
-        "label": "Elastic Search",
-        "description": "With LDAP Integration\r\nRequires a license from Elastic Search\r\nCan activate trail and apply licence via actionators on the application from the engines system gui."
+        "title": "Elastic Search local auth",
+        "label": "Elastic Search"
       }
     },
-    "timestamp": "2019-07-04T17:22:57+10:00"
+    "timestamp": "2019-07-04T17:40:30+10:00"
   },
   "software": {
     "base": {
@@ -40,63 +39,12 @@
     "scripts": {
       "start": {
         "language": "sh",
-        "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\n\r\n/home/engines/scripts/actionators/build_group_mapping.sh\r\n\r\nif test -f /home/app/state/licensed\r\n then\r\n  use_auth=true\r\n else\r\n  use_auth=false\r\nfi\r\n\r\ncat /home/app/templates/elasticsearch/config/elasticsearch.yml | sed \"/IS_LICENSED/s//$use_auth/\" > /home/app/elasticsearch/config/elasticsearch.yml\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\nstartup_complete\r\nwait\r\nshutdown_complete\r\n"
-      },
-      "install": {
-        "language": "sh",
-        "content": "#!/bin/sh\r\n\r\necho  $initial_password >  /home/app/state/password"
+        "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\nwait_for_signal()\r\n{\r\n    while ! test -f /home/engines/run/flags/sig_term -o -f /home/engines/run/flags/sig_quit \r\n     do\r\n      sleep 3600 &\r\n      wait\r\n     done\r\n}\r\n\r\n\r\nmemory=`expr $Memory - 200`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${memory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\necho $! > $PID_FILE\r\nstartup_complete\r\nwait_for_signal\r\nshutdown_complete\r\n"
       },
       "first_run": {
         "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords -s auto |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
       }
     },
-    "service_configurations": [
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "ldap_group",
-        "variables": {
-          "type": "group",
-          "cn": "_Engines_Builder(engine_name)_superusers",
-          "read_access": "all",
-          "write_access": "none",
-          "service_name": "group_Engines_Field(cn)"
-        }
-      },
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "ldap_group",
-        "variables": {
-          "type": "group",
-          "cn": "_Engines_Builder(engine_name)_users",
-          "read_access": "all",
-          "write_access": "none",
-          "service_name": "group_Engines_Field(cn)"
-        }
-      },
-      {
-        "publisher_namespace": "EnginesSystem",
-        "type_path": "ldap_access",
-        "variables": {
-          "access_dn": "uid=_Engines_Builder(engine_name),ou=hosts,ou=Engines,dc=engines,dc=internal",
-          "ldap_password": "_Engines_System(random(8))",
-          "service_name": "_Engines_Builder(engine_name)",
-          "type": "access",
-          "group_membership": null
-        }
-      }
-    ],
-    "environment_variables": [
-      {
-        "name": "initial_password",
-        "mandatory": true,
-        "immutable": true,
-        "ask_at_build_time": true,
-        "build_time_only": true,
-        "input": {
-          "type": "password_with_confirmation"
-        }
-      }
-    ],
     "template_files": [
       {
         "path": "/home/app/elasticsearch/config/elasticsearch.yml",
