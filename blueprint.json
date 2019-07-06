@@ -22,7 +22,7 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2019-07-06T15:52:03+10:00"
+    "timestamp": "2019-07-06T15:52:31+10:00"
   },
   "software": {
     "base": {
@@ -88,7 +88,7 @@
         "name": "run_backup",
         "return_type": "json",
         "script": {
-          "content": "#!/bin/sh\r\n\r\nbackup_creds=`cat /home/app/state/creds/backup`\r\nbackup_name=engines_ss_`date +%D |sed \"/\\//s//-/g\"`\r\n\r\ncurl -u $backup_creds -X PUT \"_Engines_Builder(engine_name):9200/_snapshot/engines_backup/$backup_name?wait_for_completion=false\"\r\n\r\n"
+          "content": "#!/bin/sh\r\n\r\nbackup_creds=`cat /home/fs/config/state/creds/backup`\r\nbackup_name=engines_ss_`date +%D |sed \"/\\//s//-/g\"`\r\n\r\ncurl -u $backup_creds -X PUT \"_Engines_Builder(engine_name):9200/_snapshot/engines_backup/$backup_name?wait_for_completion=false\"\r\n\r\n"
         }
       }
     ]
