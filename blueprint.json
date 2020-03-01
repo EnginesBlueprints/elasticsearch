@@ -22,7 +22,7 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2020-02-23T10:00:47+11:00"
+    "timestamp": "2020-03-01T14:36:12+11:00"
   },
   "software": {
     "base": {
@@ -45,6 +45,22 @@
         "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
       }
     },
+    "service_configurations": [
+      {
+        "publisher_namespace": "EnginesSystem",
+        "type_path": "filesystem/local/filesystem",
+        "variables": {
+          "service_name": "config",
+          "volume_src": "",
+          "engine_path": "",
+          "permissions": "rw",
+          "user": "_Engines_Builder(cont_user_id)",
+          "group": "_Engines_Builder(data_gid)",
+          "fw_user": "_Engines_Builder(cont_user_id)",
+          "exclude_from_backup": "false"
+        }
+      }
+    ],
     "template_files": [
       {
         "path": "/home/app/elasticsearch/config/elasticsearch.yml",
@@ -67,10 +83,6 @@
       }
     ],
     "persistent_directories": [
-      {
-        "path": "/home/app/elasticsearch/config",
-        "volume_name": "config"
-      },
       {
         "path": "/home/app/state",
         "volume_name": "config"
