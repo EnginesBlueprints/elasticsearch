@@ -22,13 +22,13 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2020-03-01T14:36:12+11:00"
+    "timestamp": "2020-03-01T14:55:22+11:00"
   },
   "software": {
     "base": {
       "name": "elasticsearch",
       "inherit": "https://raw.githubusercontent.com/EnginesBlueprints/elasticsearch-base/master/blueprint.json",
-      "framework": "openjdk8",
+      "framework": "openjdk11",
       "deployment_type": "web",
       "http_protocol": "https_and_http",
       "memory": {
