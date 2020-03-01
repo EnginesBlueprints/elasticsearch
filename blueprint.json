@@ -22,7 +22,7 @@
         "label": "Elastic Search"
       }
     },
-    "timestamp": "2020-03-01T16:41:30+11:00"
+    "timestamp": "2020-03-01T16:47:10+11:00"
   },
   "software": {
     "base": {
@@ -42,7 +42,7 @@
         "content": "#!/bin/sh\r\nPID_FILE=/var/run/engines/eleasticsearch.pid\r\n\r\nexport PID_FILE\r\n\r\n. /home/engines/functions/trap.sh\r\nwait_for_signal()\r\n{\r\n    while ! test -f /home/engines/run/flags/sig_term -o -f /home/engines/run/flags/sig_quit \r\n     do\r\n      sleep 3600 &\r\n      wait\r\n     done\r\n}\r\n\r\n\r\nmemory=`expr $Memory - 240`\r\ncd /home/app/elasticsearch\r\nES_JAVA_OPTS=\" -XX:UseAVX=0 -Xms${emory}m -Xmx${memory}m\" ./bin/elasticsearch -Enode.name=$node_name &\r\nsleep 120\r\necho $! > $PID_FILE\r\nif ! test -d /home/fs/config/state/creds/\r\n then\r\n  mkdir -p /home/fs/config/state/creds/\r\nfi\r\nif ! test -f /home/fs/config/state/creds/inited\r\n then\r\n   password=_Engines_System(random(18)) #move this to a template file and then delete\r\n   echo backup:$password > /home/fs/state/creds/backup\r\n   /home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >> /home/fs/config/state/creds/initial\r\n   \r\n   elastic_creds=`cat /home/fs/config/state/creds/initial |grep elastic | sed \"/PASSWORD /s///\" | sed \"/ = /s//:/\"`\r\n   \r\n   \r\n curl -u $elastic_creds  -X POST _Engines_Builder(engine_name):9200/_security/role/cluster_backup  \\\r\n     -H 'Content-Type: application/json' -d '{\"cluster\":[\"monitor\",\"create_snapshot\",\"manage\"],\r\n            \"indices\":[],\"applications\":[],\"run_as\":[],\"metadata\":{},\"transient_metadata\":{\"enabled\":true}\r\n    }'\r\n   \r\n   \r\n curl -u $elastic_creds  -X POST \"_Engines_Builder(engine_name):9200/_security/user/backup\" -H 'Content-Type: application/json' -d'\r\n{\r\n  \"password\" : \"'$password'\",\r\n  \"roles\" : [ \"cluster_backup\" ],\r\n  \"full_name\" : \"Backup\",\r\n  \"email\" : \"Backup@engines.internal\",\r\n  \"metadata\" : {\r\n    \"Usage\" : \"Backup\"\r\n  }\r\n}\r\n'\r\n #!/bin/sh\r\n\r\ncreds=`cat /home/fs/config/state/creds/backup`\r\n\r\ncurl -u $creds -X PUT \"_Engines_Builder(engine_name):9200/_snapshot/engines_backup\" -H 'Content-Type: application/json' -d'\r\n{\r\n  \"type\": \"fs\",\r\n  \"settings\": {\r\n    \"location\": \"/home/fs/backup\"\r\n  }\r\n}\r\n' \r\n \r\n touch /home/fs/config/state/creds/inited\r\nfi   \r\n\r\nstartup_complete\r\nwait_for_signal\r\nshutdown_complete\r\n"
       },
       "install": {
-        "content": "#!/bin/sh\r\n/home/engines/scripts/grant_rw_access.sh app/elasticsearch/bin/\r\nchmod ug+x /home/app/elasticsearch/bin/* /home/app/elasticsearch/jdk/bin/*\r\nchmod ug+x /home/app/elasticsearch/modules/x-pack-ml/platform/linux-x86_64/bin/*\r\n/home/engines/scripts/revoke_rw_access.sh app/elasticsearch/bin/"
+        "content": "#!/bin/sh\r\nDIRS=\"app/elasticsearch/bin/ home/app/elasticsearch/jdk/bin/ /home/app/elasticsearch/modules/x-pack-ml/platform/linux-x86_64/bin/\" \r\n for dir in DIRS\r\n  do\r\n  /home/engines/scripts/grant_rw_access.sh  $dir\r\n  chmod ug+x $dir* \r\n done"
       },
       "first_run": {
         "content": "#!/bin/sh\r\n\r\n/home/app/elasticsearch/bin/elasticsearch-keystore create\r\nmkdir -p /home/app/state/creds\r\n/home/app/elasticsearch/bin/elasticsearch-setup-passwords auto -b |grep PASSWORD >/home/app/state/creds/initial\r\n\r\n\r\n\r\n"
